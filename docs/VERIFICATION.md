@@ -21,6 +21,9 @@ Three files match the original verified sample byte for byte.
   run. A fresh Python dependency installation was not repeated.
 - Python syntax, targeted formatting, local links, and the staged file list
   were checked before committing the export.
+- Authored-file whitespace checks passed. The byte-preserved upstream
+  `public/lib/three.core.js` has one existing space-before-tab warning at
+  line 49957; its distribution was retained unchanged.
 
 ## Review findings
 
