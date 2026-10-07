@@ -40,6 +40,15 @@ The separate Netlify project is `2d-to-3d-video`, site ID
 physical controller aim, loading gaps, audio handoff, and comfort remains open.
 See [VIEWER_MODES.md](VIEWER_MODES.md) for controls and commands.
 
+Runtime commit `d920aeac398b7eab7cb2eac5f6df01a5f326c441` passed the complete
+sixteen-check local suite and was published to the new site as deploy
+`6ac6a6f8bc45321583eb4852`. All five mode checks passed against
+<https://2d-to-3d-video.netlify.app>. Nine runtime/media/depth file hashes matched
+the tested bundle. The Netlify API confirmed this deploy is published on the
+new site, while the original application's published deploy remained
+`6ac6750279b50dda762ee91a`. An ADB launch opened the new live-depth URL on the
+connected Quest 3S; this does not establish successful wearer interaction.
+
 ## Live-depth prototype
 
 The second viewer follows the approved bounded design: physical head
