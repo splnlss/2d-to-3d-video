@@ -9,7 +9,7 @@ depth displaces a shared 192 × 108 surface during playback. The original stereo
 viewer is retained and links to the new page.
 
 - All eleven local tests passed, including the preserved six stereo checks and
-  five new live-depth checks. An independent read-only reviewer ran the initial ten
+  five new live-depth checks. An independent read-only reviewer ran all eleven
   and also passed them without finding critical or important defects.
 - The rendered-pixel test moves a camera between two positions and confirms
   nearer geometry shifts more than farther geometry. A flat textured plane
@@ -39,6 +39,25 @@ shot transitions rather than every frame's pixel correspondence. Visible edge
 holes, warped subtitles, and stretched side views are accepted rough-prototype
 limits. Hardware observations for the original stereo viewer below do not
 establish live-depth tracking quality, audible output, comfort, or frame rate.
+
+### Hosted live-depth preview
+
+Runtime commit `090c3e46d6d740745706fdfbc1b3d5be4f4534aa` was uploaded as
+unpublished Netlify draft `6ac69592c300af97c882301e`. All five live-depth checks
+passed against HTTPS, including deferred-preload startup and emulated controller
+orbit. All five new runtime/depth/color files matched the final uploaded bytes;
+Three distributions also matched in the initial preview. Netlify rewrites HTML navigation
+links to its equivalent pretty URLs, so those HTML bytes differ intentionally.
+
+The connected Quest 3S opened the corrected page with WebXR present, both Play
+and Enter VR enabled, and media readiness 0 before a gesture. Automated VR entry
+did not remain active; it interrupted the pending playback attempt, and a
+subsequent remote playback inspection timed out. This is not evidence of a
+successful physical immersive session. A wearer must choose Enter VR and check
+head parallax, thumbstick orbit, comfort, audio, and sustained frame rate.
+
+The existing site's published deploy remained `6ac6750279b50dda762ee91a`
+after the final live-depth upload. The static previews are separate drafts.
 
 ## Standalone export
 

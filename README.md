@@ -13,6 +13,8 @@ Desktop users can try the orbit slider. Background is removed with a rough
 depth matte; outdoor cutaways remain flat. Depth inference happens offline,
 and unseen surfaces are approximated. See [the live-depth guide](docs/LIVE_DEPTH.md).
 
+[Open the deployed live-depth viewer](https://6ac69592c300af97c882301e--100th-meridian-prototype.netlify.app/live-depth.html).
+
 [Open the deployed viewer](https://6ac67acad7e6a99d5f8c0a09--100th-meridian-prototype.netlify.app/viewer.html).
 No Conductor login is required. In a Quest browser, choose **Enter VR**; either
 controller's trigger toggles playback. Use the headset menu to exit. Desktop
