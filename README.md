@@ -89,6 +89,7 @@ results and limitations. The second viewer adds rendered near/far parallax,
 color/depth seeking and restart, missing-depth handling, and bounded XR
 thumbstick orbit checks. Chrome is used when available; otherwise the suite
 uses Playwright's installed Chromium.
+The live-depth suite also covers VR entry when mobile video preload is deferred.
 
 ## Hosting
 

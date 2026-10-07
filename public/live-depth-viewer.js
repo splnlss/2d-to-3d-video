@@ -25,8 +25,10 @@ let lastTime = null;
 
 function refreshControls() {
   playButton.textContent = video.paused ? "Play" : "Pause";
-  playButton.disabled = restartButton.disabled = !ready || failed || video.readyState < 2;
-  vrButton.disabled = entering || (!session && (!ready || failed || !xrSupported || video.readyState < 2));
+  // Mobile browsers can defer preload until play() runs within a user gesture.
+  playButton.disabled = !ready || failed;
+  restartButton.disabled = !ready || failed || video.readyState < 2;
+  vrButton.disabled = entering || (!session && (!ready || failed || !xrSupported));
   vrButton.textContent = entering ? "Entering VR…" : session ? "Exit VR" : "Enter VR";
 }
 function fail(message) {

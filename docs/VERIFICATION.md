@@ -8,8 +8,8 @@ the talking person is favored over the background. Inference remains offline;
 depth displaces a shared 192 × 108 surface during playback. The original stereo
 viewer is retained and links to the new page.
 
-- All ten local tests passed, including the preserved six stereo checks and
-  four new live-depth checks. An independent read-only reviewer ran all ten
+- All eleven local tests passed, including the preserved six stereo checks and
+  five new live-depth checks. An independent read-only reviewer ran the initial ten
   and also passed them without finding critical or important defects.
 - The rendered-pixel test moves a camera between two positions and confirms
   nearer geometry shifts more than farther geometry. A flat textured plane
@@ -17,6 +17,12 @@ viewer is retained and links to the new page.
   rather than merely a changed readout.
 - Quest controller emulation reaches both ±25° bounds, remains clamped, and
   resets to zero. Missing depth prevents VR entry with a visible explanation.
+- Actual Quest 3S inspection found deferred media preload: readiness stayed 0
+  until a user playback gesture. Disabling Play/VR until readiness 2 stranded
+  the user. A new test starts real video from `preload="none"` and verifies VR
+  entry, playback, and exit. It failed before removing those readiness gates;
+  the corrected controls wait for depth and headset support, then initiate
+  media loading from the user's gesture. Restart still waits for decoded media.
 - Talking/cutaway transitions and restart select the correct geometry mode.
   A paused-seek regression exposed Chrome's missing hidden-video compositor
   callback and a deferred pause event disabling controls while readiness was

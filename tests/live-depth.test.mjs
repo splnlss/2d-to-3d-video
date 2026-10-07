@@ -16,7 +16,7 @@ before(async () => {
 });
 after(async () => browser?.close());
 
-async function openDepthPage(xr = false) {
+async function openDepthPage(xr = false, deferMedia = false) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   if (xr) {
     const bytes = await readFile("node_modules/iwer/build/iwer.min.js");
@@ -32,6 +32,14 @@ async function openDepthPage(xr = false) {
     `,
     });
   }
+  if (deferMedia) {
+    // Mobile browsers may defer preload until a gesture. Exercise real media
+    // loading from readiness zero, with no stubbed play/session implementation.
+    await page.route("**/live-depth.html", async (route) => {
+      const response = await route.fetch();
+      await route.fulfill({ response, body: (await response.text()).replace('preload="auto"', 'preload="none"') });
+    });
+  }
   await page.goto(`${base}/live-depth.html`);
   assert.match(await page.title(), /live depth/i, "A separate live-depth viewer must be available");
   return page;
@@ -44,6 +52,7 @@ test("depth follows the color video across talking shots, cutaways, and restart"
   page.on("pageerror", (e) => errors.push(e.message));
   try {
     await page.waitForFunction(() => !document.querySelector("#play").disabled);
+    await page.waitForFunction(() => document.querySelector("#depth-status").textContent.includes("Person depth"));
     assert.match(await page.locator("#depth-status").innerText(), /person depth/i);
     await page.getByRole("button", { name: "Play", exact: true }).click();
     await page.waitForFunction(() => document.querySelector("video").currentTime > 0.3);
@@ -70,6 +79,24 @@ test("depth follows the color video across talking shots, cutaways, and restart"
     const afterOrbit = await page.locator("#stage").screenshot();
     assert.notEqual(createHash("sha256").update(beforeOrbit).digest("hex"), createHash("sha256").update(afterOrbit).digest("hex"), "Orbit must change the rendered person, not only the angle readout");
     await page.screenshot({ path: "test-results/live-depth-side.png", fullPage: true });
+  } finally {
+    await page.close();
+  }
+});
+
+test("VR entry can start video when mobile media preload is deferred", async () => {
+  const page = await openDepthPage(true, true);
+  try {
+    await page.waitForFunction(() => document.querySelector("#status").textContent === "Ready to play");
+    assert.equal(await page.locator("video").evaluate((video) => video.readyState), 0);
+    assert.equal(await page.locator("#play").isDisabled(), false, "Play must initiate loading from a user gesture");
+    assert.equal(await page.locator("#vr").isDisabled(), false, "VR must initiate loading from a user gesture");
+    await page.getByRole("button", { name: "Enter VR", exact: true }).click();
+    await page.waitForFunction(() => document.querySelector("#vr").textContent === "Exit VR" && document.querySelector("video").currentTime > 0.1);
+    assert.match(await page.locator("#depth-status").innerText(), /person depth/i);
+    // Immersive rendering overlays the DOM; exit through the headset runtime.
+    await page.evaluate(() => window.xrTestSession.end());
+    await page.waitForFunction(() => document.querySelector("#vr").textContent === "Enter VR");
   } finally {
     await page.close();
   }
