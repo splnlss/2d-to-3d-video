@@ -1,9 +1,17 @@
 # 2D video to depth-based stereo
 
-A small Depth Anything 3 conversion example and a WebXR video viewer. The Bob
+A small Depth Anything 3 conversion example with two WebXR video viewers. The Bob
 sample is converted to half side-by-side stereo: each eye receives its own
 synthesized view on a flat cinema screen. Depth is baked into the video; the
-viewer does not build a live depth mesh or recover unseen surfaces.
+stereo viewer displays that converted video on a flat screen.
+
+The second viewer, [`public/live-depth.html`](public/live-depth.html), applies
+per-frame depth to a 3D surface during playback. Physical head movement gives
+parallax around Bob's face and upper body. The right controller's thumbstick
+orbits ±25°; either trigger toggles playback, and either grip recenters.
+Desktop users can try the orbit slider. Background is removed with a rough
+depth matte; outdoor cutaways remain flat. Depth inference happens offline,
+and unseen surfaces are approximated. See [the live-depth guide](docs/LIVE_DEPTH.md).
 
 [Open the deployed viewer](https://6ac67acad7e6a99d5f8c0a09--100th-meridian-prototype.netlify.app/viewer.html).
 No Conductor login is required. In a Quest browser, choose **Enter VR**; either
@@ -36,20 +44,23 @@ HTTPS so the browser can expose WebXR.
 
 ## Files
 
-| Path                                          | Contents                                                         |
-| --------------------------------------------- | ---------------------------------------------------------------- |
-| `public/index.html`, `public/viewer.html`     | Basic WebXR player                                               |
-| `public/viewer.js`, `public/stereo-screen.js` | Playback, XR sessions, and per-eye video sampling                |
-| `public/lib/`                                 | Three.js 0.186.0 modules and their MIT license                   |
-| `public/Bob_DA3_stereo.mp4`                   | 960 × 540, 12 fps half SBS video, left eye first, with AAC audio |
-| `public/Bob_DA3_depth.mp4`                    | Grayscale inverse depth; brighter is nearer                      |
-| `public/Bob_DA3_comparison.mp4`               | Source and depth comparison                                      |
-| `public/Bob_DA3_preview.jpg`                  | Beginning, middle, and end depth comparisons                     |
-| `public/first-frame-3d/scene.glb`             | First-frame colored point cloud                                  |
-| `tools/convert_da3.py`                        | CPU conversion of a separately supplied Bob source clip          |
-| `docs/PROCESS.md`                             | Conversion process, libraries, setup, and commands               |
-| `docs/conversion-metadata.json`               | Model/code revisions and conversion settings                     |
-| `docs/conversion-verification.json`           | Original media/array verification results                        |
+| Path                                                                                 | Contents                                                         |
+| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| `public/index.html`, `public/viewer.html`                                            | Basic WebXR player                                               |
+| `public/viewer.js`, `public/stereo-screen.js`                                        | Playback, XR sessions, and per-eye video sampling                |
+| `public/live-depth.html`, `public/live-depth-viewer.js`, `public/depth-subject.js`   | Live depth geometry, head parallax, and bounded orbit            |
+| `public/Bob_live_rgb.mp4`, `public/Bob_live_depth.png`, `public/Bob_live_depth.json` | Aligned color video, lossless depth atlas, and frame metadata    |
+| `tools/export_live_depth.py`                                                         | Export the fixed Bob sample for the live-depth viewer            |
+| `public/lib/`                                                                        | Three.js 0.186.0 modules and their MIT license                   |
+| `public/Bob_DA3_stereo.mp4`                                                          | 960 × 540, 12 fps half SBS video, left eye first, with AAC audio |
+| `public/Bob_DA3_depth.mp4`                                                           | Grayscale inverse depth; brighter is nearer                      |
+| `public/Bob_DA3_comparison.mp4`                                                      | Source and depth comparison                                      |
+| `public/Bob_DA3_preview.jpg`                                                         | Beginning, middle, and end depth comparisons                     |
+| `public/first-frame-3d/scene.glb`                                                    | First-frame colored point cloud                                  |
+| `tools/convert_da3.py`                                                               | CPU conversion of a separately supplied Bob source clip          |
+| `docs/PROCESS.md`                                                                    | Conversion process, libraries, setup, and commands               |
+| `docs/conversion-metadata.json`                                                      | Model/code revisions and conversion settings                     |
+| `docs/conversion-verification.json`                                                  | Original media/array verification results                        |
 
 The original input, model weights, upstream source checkout, virtual
 environment, and large raw depth archive are excluded from Git.
@@ -74,7 +85,9 @@ The suite checks actual media playback, pause, seeking, restart, byte ranges,
 missing-media behavior, and rendered eye separation. It also uses the
 checksum-pinned IWER 2.5.0 emulator to exercise VR entry, controller triggers,
 exit/reentry, and exit after media failure. See `docs/VERIFICATION.md` for
-results and limitations. Chrome is used when available; otherwise the suite
+results and limitations. The second viewer adds rendered near/far parallax,
+color/depth seeking and restart, missing-depth handling, and bounded XR
+thumbstick orbit checks. Chrome is used when available; otherwise the suite
 uses Playwright's installed Chromium.
 
 ## Hosting
@@ -95,8 +108,10 @@ copying this repository does not change its deployment.
 The conversion uses independent monocular frame predictions and relative
 depth, without temporal alignment or calibrated metric depth. Fine hair,
 glasses, subtitles, occlusion boundaries, and filled gaps can show artifacts.
-Leaning changes your position relative to the virtual screen, without revealing
-new views of the filmed scene. The full sample is approximately 17.4 seconds.
+In the stereo viewer, leaning changes your position relative to the virtual
+screen. In the live-depth viewer, leaning changes your view of the depth surface;
+it can expose holes and stretched pixels at larger angles. Neither recovers
+unseen anatomy. The full sample is approximately 17.4 seconds.
 
 An actual Quest 3S reported an active VR session and playing, unmuted video.
 Subjective stereo comfort, audible headset output, and device frame time still

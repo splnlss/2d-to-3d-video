@@ -1,5 +1,39 @@
 # Verification and review
 
+## Live-depth prototype
+
+The second viewer follows the approved bounded design: physical head
+translation creates parallax, right-thumbstick orbit is limited to ±25°, and
+the talking person is favored over the background. Inference remains offline;
+depth displaces a shared 192 × 108 surface during playback. The original stereo
+viewer is retained and links to the new page.
+
+- All ten local tests passed, including the preserved six stereo checks and
+  four new live-depth checks. An independent read-only reviewer ran all ten
+  and also passed them without finding critical or important defects.
+- The rendered-pixel test moves a camera between two positions and confirms
+  nearer geometry shifts more than farther geometry. A flat textured plane
+  fails this check. The orbit check also confirms changed rendered pixels,
+  rather than merely a changed readout.
+- Quest controller emulation reaches both ±25° bounds, remains clamped, and
+  resets to zero. Missing depth prevents VR entry with a visible explanation.
+- Talking/cutaway transitions and restart select the correct geometry mode.
+  A paused-seek regression exposed Chrome's missing hidden-video compositor
+  callback and a deferred pause event disabling controls while readiness was
+  temporarily 1. Refreshing the decoded frame on `seeked` and transport controls
+  on `canplay` resolves both, without weakening the checks.
+- All 209 RGB frames decode at 960 × 540 with AAC audio. Every atlas tile has
+  finite display distance in range; all talking frames have a nonempty person
+  matte, and all cutaways are flat and opaque. Recorded measurements are in
+  [live-depth-verification.json](live-depth-verification.json).
+
+The reviewer checked aligned DA3 preprocessing, atlas addressing, world-fixed
+placement, and active-session exit availability. Automated timing checks cover
+shot transitions rather than every frame's pixel correspondence. Visible edge
+holes, warped subtitles, and stretched side views are accepted rough-prototype
+limits. Hardware observations for the original stereo viewer below do not
+establish live-depth tracking quality, audible output, comfort, or frame rate.
+
 ## Standalone export
 
 The export preserves the previously reviewed viewer and its six test cases.

@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "python3 tools/serve.py",
-    "test": "node --test tests/viewer.test.mjs"
+    "test": "node --test tests/*.test.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",

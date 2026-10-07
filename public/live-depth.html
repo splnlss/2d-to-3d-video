@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Bob · WebXR video viewer</title>
+    <title>Bob · Live depth prototype</title>
     <style>
       :root {
         color-scheme: dark;
@@ -89,25 +89,31 @@
     </style>
   </head>
   <body>
-    <a href="./results.html">← Conversion results</a>
-    · <a href="./live-depth.html">Live depth viewer →</a>
-    <h1>Bob · 3D video</h1>
-    <p>Watch the converted video on a virtual cinema screen.</p>
+    <a href="./viewer.html">← Stereo viewer</a> · <a href="./results.html">Conversion results</a>
+    <h1>Bob · Live depth</h1>
+    <p>Move your head to look around the talking person. Depth updates with the video.</p>
     <div id="stage" aria-label="Video preview"></div>
-    <video id="video" src="./Bob_DA3_stereo.mp4" playsinline preload="auto" hidden></video>
+    <video id="video" src="./Bob_live_rgb.mp4" playsinline preload="auto" hidden></video>
     <div class="controls">
       <button id="play" type="button" disabled>Play</button>
       <button id="restart" type="button" disabled>Restart</button>
+      <button id="recenter" type="button">Recenter</button>
       <button id="vr" type="button" disabled>Enter VR</button>
       <span id="time">0:00 / 0:00</span>
     </div>
+    <div class="controls">
+      <label for="orbit">Orbit</label>
+      <input id="orbit" type="range" min="-25" max="25" value="0" step="0.1" aria-label="Orbit angle" />
+      <output id="orbit-angle" for="orbit">0°</output>
+    </div>
+    <p id="depth-status" role="status">Loading person depth…</p>
     <p id="status" role="status" aria-live="polite">Loading video…</p>
     <p id="xr-status">Checking headset support…</p>
-    <p>In your headset browser, choose <strong>Enter VR</strong>. Press either controller's trigger to play or pause. Use the headset menu to exit.</p>
-    <p>The desktop preview shows the left-eye image. In VR, each eye gets its own image from the depth-based conversion.</p>
+    <p>In your headset browser, choose <strong>Enter VR</strong>. Lean sideways for parallax. Use the right thumbstick to orbit ±25°, either trigger to play/pause, and either grip to recenter. Use the headset menu to exit.</p>
+    <p>Person depth is applied to geometry during playback. Outdoor cutaways stay flat. Side views are approximate; unseen surfaces can stretch or have gaps.</p>
     <noscript
-      ><p>Enable JavaScript to use the viewer, or <a href="Bob_DA3_stereo.mp4">download the video</a>.</p></noscript
+      ><p>Enable JavaScript to use the viewer, or <a href="Bob_live_rgb.mp4">download the video</a>.</p></noscript
     >
-    <script type="module" src="./viewer.js"></script>
+    <script type="module" src="./live-depth-viewer.js"></script>
   </body>
 </html>

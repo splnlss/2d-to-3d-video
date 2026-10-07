@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "frames": 209,
+  "fps": 12.0,
+  "tileWidth": 192,
+  "tileHeight": 108,
+  "columns": 16,
+  "rows": 14,
+  "near": 0.7,
+  "far": 3.5,
+  "anchorDepth": 1.8,
+  "shots": [
+    {
+      "start": 0,
+      "end": 50,
+      "talking": true,
+      "center": [0.64, 0.38],
+      "intrinsics": [1.1034192282056052, 1.986484636579241, 0.5, 0.5]
+    },
+    {
+      "start": 50,
+      "end": 144,
+      "talking": false,
+      "center": [0.5, 0.5],
+      "intrinsics": [0.8038189600384424, 1.4609331403459822, 0.5, 0.5]
+    },
+    {
+      "start": 144,
+      "end": 209,
+      "talking": true,
+      "center": [0.56, 0.3],
+      "intrinsics": [1.1481502472408234, 2.0470541817801338, 0.5, 0.5]
+    }
+  ],
+  "depthEncoding": "16-bit RG high/low bytes; B foreground opacity; A 255",
+  "depthUnits": "display metres after per-frame relative-depth normalization; not calibrated scene metres",
+  "coordinates": "WebXR local metres; X right, Y up, Z toward the viewer",
+  "sourceDepthShape": [209, 280, 504],
+  "model": "depth-anything/DA3-SMALL",
+  "modelRevision": "e08cab65ca0ec38e7826075418411ab90cab4da3",
+  "codeRevision": "3d835ec1a5802d64a8b8b15f817a1ab54809bfe4"
+}
