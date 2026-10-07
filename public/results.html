@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bob — Depth Anything 3 trial</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: system-ui, sans-serif;
+    }
+    body {
+      margin: 0 auto;
+      padding: 28px 20px 60px;
+      max-width: 1080px;
+      background: #131619;
+      color: #edf1f4;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    h2 {
+      font-size: 20px;
+      margin-top: 32px;
+    }
+    p {
+      line-height: 1.6;
+      color: #bfc8ce;
+    }
+    video {
+      width: 100%;
+      background: black;
+      border-radius: 8px;
+    }
+    a {
+      color: #9bd8ff;
+    }
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin: 20px 0;
+    }
+  </style>
+  <h1>Bob · Depth Anything 3</h1>
+  <p>Full-clip trial with DA3-SMALL. Approximately 17.4 seconds, 12 fps. Depth is estimated on CPU in float32.</p>
+  <p><a href="viewer.html">Open the WebXR video viewer →</a></p>
+  <h2>Source and estimated depth</h2>
+  <p>The source is on the left; depth is on the right. Brighter means nearer.</p>
+  <video controls playsinline preload="metadata" poster="Bob_DA3_preview.jpg" src="Bob_DA3_comparison.mp4"></video>
+  <h2>Synthesized 3D video</h2>
+  <p>Download and play in Half SBS mode, left eye first, for stereo viewing. The browser below displays the two packed views. Original audio is included.</p>
+  <video controls playsinline preload="metadata" src="Bob_DA3_stereo.mp4"></video>
+  <nav>
+    <a download href="Bob_DA3_stereo.mp4">Download 3D video</a>
+    <a download href="Bob_DA3_comparison.mp4">Download comparison</a>
+    <a download href="Bob_DA3_depth.mp4">Download depth video</a>
+    <a download href="first-frame-3d/scene.glb">Download first-frame 3D point cloud</a>
+  </nav>
+  <p>This is a depth-based stereo preview. Frames are inferred independently; edges, glasses, subtitles, and motion can produce artifacts. Depth is relative, not measured in metres. The point cloud describes visible surfaces in one frame.</p>
+</html>

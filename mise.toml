@@ -1,0 +1,10 @@
+[tools]
+node = "22.23.2"
+pnpm = "10.12.1"
+
+[settings]
+auto_install = false
+lockfile = true
+
+[tool_config]
+locked = true

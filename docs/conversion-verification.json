@@ -1,0 +1,7 @@
+{
+  "status": "passed",
+  "raw_depth_shape": [209, 280, 504],
+  "decoded_frames_per_video": 209,
+  "audio_codec": "AAC",
+  "glb_vertices": 52040
+}

@@ -1,0 +1,11 @@
+.venv/
+node_modules/
+models/
+vendor/
+input/
+outputs/
+test-results/
+__pycache__/
+*.pyc
+.env*
+.netlify/

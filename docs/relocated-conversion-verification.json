@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "raw_depth_shape": [209, 280, 504],
+  "depth_dtype": "float32",
+  "depth_finite_positive": true,
+  "decoded_frames_per_video": {
+    "stereo": 209,
+    "comparison": 209,
+    "depth": 209
+  },
+  "audio_codec": "AAC",
+  "frames": 209,
+  "elapsed_seconds": 130.3670871257782,
+  "setup": "relocated source, existing verified CPU dependencies and pinned code/model; clean environment install not repeated"
+}

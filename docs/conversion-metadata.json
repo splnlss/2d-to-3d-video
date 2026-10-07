@@ -1,0 +1,23 @@
+{
+  "source": "Bob.mp4 (supplied separately; not included in this repository)",
+  "model": "depth-anything/DA3-SMALL",
+  "model_revision": "e08cab65ca0ec38e7826075418411ab90cab4da3",
+  "code_revision": "3d835ec1a5802d64a8b8b15f817a1ab54809bfe4",
+  "device": "cpu",
+  "precision": "float32",
+  "fps": 12,
+  "frames": 209,
+  "duration_seconds": 17.416666666666668,
+  "model_depth_shape": [209, 280, 504],
+  "process_res": 504,
+  "video_resolution": [960, 540],
+  "inference_mode": "independent monocular frames; no cross-frame pose alignment",
+  "depth_reference_frame": "per-frame predicted camera; X right, Y down, Z forward",
+  "depth_units": "relative model units, not calibrated metres",
+  "stereo_format": "half side-by-side; left eye first; synthesized views",
+  "stereo_max_absolute_disparity_pixels_per_eye": 4,
+  "stereo_hole_fill": "OpenCV Telea inpainting",
+  "visualization": "inverse depth; fixed global 2nd and 98th percentile range",
+  "audio": "source audio re-encoded to AAC 192k",
+  "elapsed_seconds": 145.32487535476685
+}
