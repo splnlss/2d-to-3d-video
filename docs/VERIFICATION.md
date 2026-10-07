@@ -1,5 +1,45 @@
 # Verification and review
 
+## Switching modes inside VR
+
+Both entry pages now share a player with browser and floating VR mode buttons.
+Tracked controller rays select the floating button. The same session and world
+anchor remain active while stereo/depth visibility and the video change. The
+inactive video is paused, and the destination seeks to the previous timestamp.
+
+All sixteen local checks passed: the unchanged eleven previous checks plus
+five mode-switch checks for paused timestamp/rendering on every entry route,
+controller selection/same-session playback, failed destination recovery,
+active-media error recovery, and switching/restart at the end of the clip.
+The first three tests failed against the previous player before implementation.
+The decoder-error regression uses an error event on a real decoded video;
+it does not simulate a physical hardware decoder failure.
+
+Review findings and dispositions:
+
+1. **Active-video failure resets recovery time. Resolved.** The initial handler
+   saved a recovery position only during a pending switch. The reviewer
+   reproduced 13 seconds resetting to zero. A regression confirmed that failure;
+   the handler now captures either the pending timestamp or active media time
+   and play/pause state before stopping playback. Duplicate failures preserve
+   the first snapshot.
+2. **Paused silent priming advances the timestamp. Resolved.** A repeated full
+   run observed 13 seconds becoming 13.184. Once decoding is available, the
+   destination is paused and seeks back to the exact saved time before completing
+   the switch. Playing transitions allow their clock to advance naturally;
+   they no longer require the time to remain inside a small completion window.
+
+An independent read-only reviewer reran all sixteen checks successfully and
+confirmed the recovery finding was resolved, with no remaining critical or
+important findings. No previous assertion was removed or weakened.
+
+The floating button is shared between the eyes; stereo screens retain their
+separate eye layers. There are no new runtime packages or changes to Three.
+The separate Netlify project is `2d-to-3d-video`, site ID
+`b8eb660e-923c-4f98-ab0d-1b234517e0ee`, under `splnlss`. Wearer verification of
+physical controller aim, loading gaps, audio handoff, and comfort remains open.
+See [VIEWER_MODES.md](VIEWER_MODES.md) for controls and commands.
+
 ## Live-depth prototype
 
 The second viewer follows the approved bounded design: physical head

@@ -10,7 +10,10 @@ The original stereo viewer remains at `/viewer.html`.
   your head changes where you look without steering the orbit.
 - **Right thumbstick:** orbit the surface around its face anchor, limited to
   −25° through +25°. Desktop users have the same range on the orbit slider.
-- **Either trigger:** play/pause, including the original audio.
+- **Switch mode:** use the browser button, or point either controller at the
+  floating button below Bob and press the trigger. Switch between Video VR and
+  Live depth without leaving the immersive session or resetting playback.
+- **Either trigger, pointed away from the switch:** play/pause, including audio.
 - **Either grip / Recenter:** reset orbit and place Bob in front of you again.
 - **Restart:** return to the beginning. **Exit VR** or the headset menu ends VR.
 

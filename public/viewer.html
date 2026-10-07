@@ -88,25 +88,36 @@
       }
     </style>
   </head>
-  <body>
-    <a href="./results.html">← Conversion results</a>
-    · <a href="./live-depth.html">Live depth viewer →</a>
-    <h1>Bob · 3D video</h1>
-    <p>Watch the converted video on a virtual cinema screen.</p>
+  <body data-start-mode="stereo">
+    <a href="./viewer.html">← Stereo viewer</a> · <a href="./results.html">Conversion results</a>
+    <h1>Bob · Video VR</h1>
+    <p>Viewer mode: <strong id="mode-label">Video VR</strong></p>
+    <p>Watch the stereo video or switch to live depth to look around Bob.</p>
     <div id="stage" aria-label="Video preview"></div>
     <video id="video" src="./Bob_DA3_stereo.mp4" playsinline preload="auto" hidden></video>
     <div class="controls">
       <button id="play" type="button" disabled>Play</button>
       <button id="restart" type="button" disabled>Restart</button>
+      <button id="recenter" type="button">Recenter</button>
+      <button id="switch-mode" type="button" disabled>Switch to Live depth</button>
       <button id="vr" type="button" disabled>Enter VR</button>
       <span id="time">0:00 / 0:00</span>
     </div>
+    <div class="controls">
+      <label for="orbit">Orbit</label>
+      <input id="orbit" type="range" min="-25" max="25" value="0" step="0.1" aria-label="Orbit angle" />
+      <output id="orbit-angle" for="orbit">0°</output>
+    </div>
+    <p id="depth-status">Video VR · stereo cinema screen</p>
     <p id="status" role="status" aria-live="polite">Loading video…</p>
     <p id="xr-status">Checking headset support…</p>
-    <p>In your headset browser, choose <strong>Enter VR</strong>. Press either controller's trigger to play or pause. Use the headset menu to exit.</p>
-    <p>The desktop preview shows the left-eye image. In VR, each eye gets its own image from the depth-based conversion.</p>
+    <p>
+      In your headset browser, choose <strong>Enter VR</strong>. Lean sideways for parallax. Use the right thumbstick to orbit ±25°, either trigger to play/pause, and either grip to recenter. Point either controller at the floating switch button and press its trigger to change modes without leaving VR. Use the headset
+      menu to exit.
+    </p>
+    <p>Person depth is applied to geometry during playback. Outdoor cutaways stay flat. Side views are approximate; unseen surfaces can stretch or have gaps.</p>
     <noscript
-      ><p>Enable JavaScript to use the viewer, or <a href="Bob_DA3_stereo.mp4">download the video</a>.</p></noscript
+      ><p>Enable JavaScript to use the viewer, or <a href="Bob_live_rgb.mp4">download the video</a>.</p></noscript
     >
     <script type="module" src="./viewer.js"></script>
   </body>

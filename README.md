@@ -13,12 +13,18 @@ Desktop users can try the orbit slider. Background is removed with a rough
 depth matte; outdoor cutaways remain flat. Depth inference happens offline,
 and unseen surfaces are approximated. See [the live-depth guide](docs/LIVE_DEPTH.md).
 
-[Open the deployed live-depth viewer](https://6ac69592c300af97c882301e--100th-meridian-prototype.netlify.app/live-depth.html).
+[Open the live-depth viewer](https://2d-to-3d-video.netlify.app/live-depth.html).
 
-[Open the deployed viewer](https://6ac67acad7e6a99d5f8c0a09--100th-meridian-prototype.netlify.app/viewer.html).
+[Open the Video VR viewer](https://2d-to-3d-video.netlify.app/).
 No Conductor login is required. In a Quest browser, choose **Enter VR**; either
 controller's trigger toggles playback. Use the headset menu to exit. Desktop
 controls provide play/pause and restart.
+
+Both pages have a **Switch to Live depth / Switch to Video VR** button. In VR,
+point either controller at the floating switch button below Bob and press the
+trigger. The session stays open and the playback position and paused/playing
+state carry over. Point away from the button to use the trigger for play/pause.
+See [viewer modes](docs/VIEWER_MODES.md) for implementation and checks.
 
 ## Run locally
 
@@ -103,8 +109,9 @@ your chosen existing site from an authenticated Netlify CLI session:
 netlify deploy --site <site-id> --dir public --no-build
 ```
 
-This creates an unpublished draft. The linked demo is a standalone draft;
-copying this repository does not change its deployment.
+This creates an unpublished draft. The linked demo uses its own standalone
+Netlify project, `2d-to-3d-video`; copying this repository does not change its
+deployment. The site is manually deployed and has no Git build integration.
 
 ## Limits
 

@@ -1,7 +1,16 @@
 import * as THREE from "./lib/three.module.js";
 import { createDepthSubject, frameAtTime, clampOrbit } from "./depth-subject.js";
+import { createStereoScreen } from "./stereo-screen.js";
+import { createXRModeButton } from "./xr-mode-button.js";
 
-const video = document.querySelector("#video");
+let video = document.querySelector("#video");
+let mode = document.body.dataset.startMode === "stereo" ? "stereo" : "depth";
+const alternateVideo = document.createElement("video");
+alternateVideo.hidden = alternateVideo.playsInline = true;
+alternateVideo.preload = "auto";
+const videos = mode === "depth" ? { depth: video, stereo: alternateVideo } : { stereo: video, depth: alternateVideo };
+const modeButton = document.querySelector("#switch-mode");
+const modeLabel = document.querySelector("#mode-label");
 const stage = document.querySelector("#stage");
 const playButton = document.querySelector("#play");
 const restartButton = document.querySelector("#restart");
@@ -16,7 +25,11 @@ let session = null;
 let xrSupported = false;
 let entering = false;
 let failed = false;
-let ready = false;
+let ready = mode === "stereo";
+let switching = false;
+let pendingSwitch = null;
+let failedPosition = 0;
+let failedResume = false;
 let centerOnNextFrame = false;
 let subject = null;
 let spec = null;
@@ -26,27 +39,37 @@ let lastTime = null;
 function refreshControls() {
   playButton.textContent = video.paused ? "Play" : "Pause";
   // Mobile browsers can defer preload until play() runs within a user gesture.
-  playButton.disabled = !ready || failed;
-  restartButton.disabled = !ready || failed || video.readyState < 2;
-  vrButton.disabled = entering || (!session && (!ready || failed || !xrSupported));
+  playButton.disabled = !ready || failed || switching;
+  restartButton.disabled = !ready || failed || switching || video.readyState < 2;
+  vrButton.disabled = entering || (!session && (!ready || failed || switching || !xrSupported));
   vrButton.textContent = entering ? "Entering VR…" : session ? "Exit VR" : "Enter VR";
+  modeButton.disabled = switching || (mode === "stereo" && !subject);
+  orbit.disabled = mode === "stereo";
 }
 function fail(message) {
+  if (!failed) {
+    failedPosition = pendingSwitch?.time ?? video.currentTime;
+    failedResume = pendingSwitch?.resume ?? !video.paused;
+  }
+  pendingSwitch = null;
+  switching = false;
   failed = true;
   video.pause();
   status.textContent = message;
   refreshControls();
 }
 async function play() {
+  const playingVideo = video;
   try {
-    await video.play();
-    status.textContent = "Playing";
+    await playingVideo.play();
+    if (video === playingVideo && !failed && !switching) status.textContent = "Playing";
   } catch (error) {
-    status.textContent = `Playback could not start. Press Play to retry. ${error.message}`;
+    if (video === playingVideo && !failed && !switching && error.name !== "AbortError") status.textContent = `Playback could not start. Press Play to retry. ${error.message}`;
   }
   refreshControls();
 }
 function togglePlayback() {
+  if (!ready || failed || switching) return;
   if (video.paused) void play();
   else video.pause();
 }
@@ -68,30 +91,12 @@ restartButton.addEventListener("click", () => {
 });
 orbit.addEventListener("input", () => setOrbit(Number(orbit.value)));
 document.querySelector("#recenter").addEventListener("click", recenter);
-video.addEventListener("error", () => fail("The video could not be loaded. Reload the page to retry."));
-video.addEventListener("loadeddata", () => {
-  drawFrame(video.currentTime);
-  if (ready && !failed) status.textContent = "Ready to play";
-  refreshControls();
-});
-video.addEventListener("play", refreshControls);
-video.addEventListener("canplay", refreshControls);
-video.addEventListener("pause", () => {
-  if (!failed) status.textContent = "Paused";
-  refreshControls();
-});
-video.addEventListener("ended", () => {
-  status.textContent = "Finished — press Restart to watch again";
-  refreshControls();
-});
 function clock(seconds) {
   return Number.isFinite(seconds) ? `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}` : "0:00";
 }
 function updateTime() {
   time.textContent = `${clock(video.currentTime)} / ${clock(video.duration)}`;
 }
-video.addEventListener("timeupdate", updateTime);
-video.addEventListener("loadedmetadata", updateTime);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -101,6 +106,7 @@ stage.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("#050608");
 const camera = new THREE.PerspectiveCamera(45, 16 / 9, 0.05, 20);
+camera.layers.enable(1); // Desktop stereo preview uses the left eye.
 const anchor = new THREE.Group();
 anchor.position.set(0, 0, -1.8); // Display metres; independent of monocular scene scale.
 scene.add(anchor);
@@ -115,26 +121,135 @@ const colorTexture = new THREE.CanvasTexture(colorCanvas);
 colorTexture.colorSpace = THREE.SRGBColorSpace;
 colorTexture.generateMipmaps = false;
 colorTexture.minFilter = THREE.LinearFilter;
+const screen = createStereoScreen(colorTexture);
+screen.position.z = -1.2; // Together with the anchor, 3 display metres ahead.
+anchor.add(screen);
+const xrModeButton = createXRModeButton();
+anchor.add(xrModeButton.mesh);
+
+function showMode() {
+  const stereo = mode === "stereo";
+  ready = stereo || !!subject;
+  screen.visible = stereo;
+  if (subject) subject.visible = !stereo;
+  modeLabel.textContent = stereo ? "Video VR" : "Live depth";
+  document.querySelector("h1").textContent = `Bob · ${modeLabel.textContent}`;
+  const label = stereo ? "Switch to Live depth" : "Switch to Video VR";
+  modeButton.textContent = label;
+  xrModeButton.setLabel(label);
+  depthStatus.textContent = stereo ? "Video VR · stereo cinema screen" : "Loading person depth…";
+  refreshControls();
+}
+function finishSwitch() {
+  if (!pendingSwitch || video.readyState < 2) return;
+  const targetTime = Math.min(pendingSwitch.time, video.duration);
+  // Silent priming can advance while decoding/main-thread work runs. Stop it
+  // first and seek back precisely, rather than freezing an advanced frame.
+  if (!pendingSwitch.resume && !video.paused) {
+    video.pause();
+    video.currentTime = targetTime;
+    return;
+  }
+  if (video.seeking || video.currentTime < targetTime - 0.1) return;
+  const resume = pendingSwitch.resume;
+  pendingSwitch = null;
+  switching = false;
+  if (!resume) video.pause();
+  video.muted = false;
+  drawFrame(video.currentTime);
+  status.textContent = resume ? "Playing" : "Paused";
+  updateTime();
+  refreshControls();
+}
+function switchMode() {
+  if (switching || (mode === "stereo" && !subject)) return;
+  const targetMode = mode === "depth" ? "stereo" : "depth";
+  const source = video;
+  const job = { time: failed ? failedPosition : source.currentTime, resume: failed ? failedResume : !source.paused };
+  switching = true;
+  source.pause();
+  source.remove();
+  source.removeAttribute("id");
+  video = videos[targetMode];
+  video.id = "video";
+  stage.insertAdjacentElement("afterend", video);
+  mode = targetMode;
+  failed = false;
+  pendingSwitch = job;
+  context.fillStyle = "black";
+  context.fillRect(0, 0, 960, 540);
+  colorTexture.needsUpdate = true;
+  if (!video.getAttribute("src") || video.error) {
+    video.src = mode === "depth" ? "./Bob_live_rgb.mp4" : "./Bob_DA3_stereo.mp4";
+    video.load();
+  }
+  // Setting currentTime before metadata stores the default playback start time.
+  video.currentTime = job.time;
+  video.muted = !job.resume;
+  showMode();
+  status.textContent = `Switching to ${modeLabel.textContent}…`;
+  // Prime a paused destination silently as well: Quest may defer preload until
+  // play() is invoked by this gesture. Pause and restore audio after decoding.
+  void video.play().catch((error) => {
+    if (pendingSwitch === job && error.name !== "AbortError") fail(`Playback could not start. Press Play to retry. ${error.message}`);
+  });
+  finishSwitch();
+}
+modeButton.addEventListener("click", switchMode);
+
 function drawFrame(mediaTime) {
-  if (video.readyState < 2) return;
+  if (video.readyState < 2 || switching) return;
   context.drawImage(video, 0, 0, 960, 540);
   colorTexture.needsUpdate = true;
-  if (subject && spec) {
+  if (mode === "depth" && subject && spec) {
     const shot = subject.setFrame(frameAtTime(mediaTime, spec));
     depthStatus.textContent = shot.talking ? "Person depth applied · move your head or orbit" : "Cutaway · flat video; person depth resumes when Bob returns";
   }
 }
 // Paused, hidden videos do not reliably issue a new compositor callback after
 // seeking. At seeked the requested frame is decoded and can be captured safely.
-video.addEventListener("seeked", () => drawFrame(video.currentTime));
-if (video.requestVideoFrameCallback) {
-  const decoded = (_, metadata) => {
-    const stalePausedFrame = video.paused && spec && Math.abs(metadata.mediaTime - video.currentTime) > 1 / spec.fps;
-    if (!video.seeking && !stalePausedFrame) drawFrame(metadata.mediaTime);
-    video.requestVideoFrameCallback(decoded);
-  };
-  video.requestVideoFrameCallback(decoded);
+function bindVideo(element) {
+  element.addEventListener("error", () => {
+    if (element === video) fail("The video could not be loaded. Switch modes or reload to retry.");
+  });
+  for (const name of ["loadeddata", "seeked", "canplay"])
+    element.addEventListener(name, () => {
+      if (element !== video) return;
+      finishSwitch();
+      drawFrame(video.currentTime);
+      if (name === "loadeddata" && ready && !failed && !switching) status.textContent = video.paused ? "Ready to play" : "Playing";
+      refreshControls();
+    });
+  element.addEventListener("play", () => {
+    if (element === video) refreshControls();
+  });
+  element.addEventListener("pause", () => {
+    if (element !== video) return;
+    if (!failed && !switching) status.textContent = "Paused";
+    refreshControls();
+  });
+  element.addEventListener("ended", () => {
+    if (element !== video) return;
+    status.textContent = "Finished — press Restart to watch again";
+    refreshControls();
+  });
+  for (const name of ["timeupdate", "loadedmetadata"])
+    element.addEventListener(name, () => {
+      if (element === video) updateTime();
+    });
+  if (element.requestVideoFrameCallback) {
+    const decoded = (_, metadata) => {
+      if (element === video) {
+        finishSwitch();
+        const stalePausedFrame = video.paused && Math.abs(metadata.mediaTime - video.currentTime) > 1 / 12;
+        if (!video.seeking && !stalePausedFrame) drawFrame(metadata.mediaTime);
+      }
+      element.requestVideoFrameCallback(decoded);
+    };
+    element.requestVideoFrameCallback(decoded);
+  }
 }
+Object.values(videos).forEach(bindVideo);
 
 function resize() {
   const { width, height } = stage.getBoundingClientRect();
@@ -144,17 +259,27 @@ function resize() {
 }
 new ResizeObserver(resize).observe(stage);
 resize();
+const controllers = [];
 for (let i = 0; i < 2; i++) {
   const controller = renderer.xr.getController(i);
-  controller.addEventListener("select", togglePlayback);
+  controller.addEventListener("select", () => {
+    if (xrModeButton.hit(controller)) switchMode();
+    else togglePlayback();
+  });
   controller.addEventListener("squeezestart", recenter);
+  const ray = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 0, -1)]), new THREE.LineBasicMaterial({ color: "#a9ddff", depthTest: false }));
+  ray.visible = false;
+  controller.add(ray);
+  controllers.push({ controller, ray });
   scene.add(controller);
 }
 renderer.xr.addEventListener("sessionend", () => {
   session = null;
   centerOnNextFrame = false;
   lastTime = null;
+  if (pendingSwitch) pendingSwitch.resume = false;
   video.pause();
+  xrModeButton.mesh.visible = false;
   camera.position.set(0, 0, 0);
   camera.quaternion.identity();
   anchor.position.set(0, 0, -1.8);
@@ -176,8 +301,12 @@ vrButton.addEventListener("click", async () => {
     session = await requested;
     centerOnNextFrame = true;
     await renderer.xr.setSession(session);
+    xrModeButton.mesh.visible = true;
     session.addEventListener("visibilitychange", () => {
-      if (session?.visibilityState === "hidden") video.pause();
+      if (session?.visibilityState === "hidden") {
+        if (pendingSwitch) pendingSwitch.resume = false;
+        video.pause();
+      }
     });
   } catch (error) {
     if (session) await session.end().catch(() => {});
@@ -212,8 +341,16 @@ renderer.setAnimationLoop((timestamp, frame) => {
     const source = inputs.find((source) => source.handedness === "right" && source.gamepad) ?? inputs.find((source) => source.gamepad);
     const axes = source?.gamepad?.axes;
     const x = axes ? axes[axes.length >= 4 ? 2 : 0] : 0;
-    if (Number.isFinite(x) && Math.abs(x) > 0.15) setOrbit(degrees + x * 45 * dt);
+    if (mode === "depth" && Number.isFinite(x) && Math.abs(x) > 0.15) setOrbit(degrees + x * 45 * dt);
   }
+  let hovering = false;
+  for (const { controller, ray } of controllers) {
+    ray.visible = !!session;
+    const hit = session ? xrModeButton.hit(controller) : null;
+    ray.scale.z = hit?.distance ?? 3;
+    hovering ||= !!hit;
+  }
+  xrModeButton.highlight(hovering && !modeButton.disabled);
   if (!video.requestVideoFrameCallback) drawFrame(video.currentTime);
   renderer.render(scene, camera);
 });
@@ -228,13 +365,15 @@ async function initializeDepth() {
     if (texture.image.width !== spec.columns * spec.tileWidth || texture.image.height !== spec.rows * spec.tileHeight) throw new Error("Depth atlas dimensions differ from metadata");
     subject = createDepthSubject(colorTexture, texture, spec);
     anchor.add(subject);
+    subject.visible = mode === "depth";
     ready = true;
     drawFrame(video.currentTime);
     if (!failed) status.textContent = "Ready to play";
     refreshControls();
   } catch (error) {
     depthStatus.textContent = "Depth unavailable";
-    fail(`Depth could not be loaded. Reload to retry. ${error.message}`);
+    if (mode === "depth") fail(`Depth could not be loaded. Reload to retry. ${error.message}`);
+    else refreshControls();
   }
 }
 async function checkXR() {
@@ -250,7 +389,12 @@ async function checkXR() {
   }
   refreshControls();
 }
-window.addEventListener("pagehide", () => video.pause());
+window.addEventListener("pagehide", () => {
+  if (pendingSwitch) pendingSwitch.resume = false;
+  Object.values(videos).forEach((element) => element.pause());
+});
+showMode();
+drawFrame(video.currentTime);
 void initializeDepth();
 void checkXR();
 if (video.error) fail("The video could not be loaded. Reload the page to retry.");
